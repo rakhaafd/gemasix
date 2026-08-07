@@ -1,0 +1,50 @@
+{
+  "name": "gemasix",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "browser-image-compression": "^2.0.2",
+    "cloudinary": "^2.10.0",
+    "clsx": "^2.1.1",
+    "firebase": "^12.17.0",
+    "framer-motion": "^12.43.0",
+    "html-to-image": "^1.11.13",
+    "lucide-react": "^1.28.0",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-quill-new": "^3.8.3",
+    "sweetalert2": "^11.26.25",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.20",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "pnpm": {
+    "approvedBuilds": [
+      "@prisma/engines",
+      "@prisma/client",
+      "@firebase/util",
+      "protobufjs"
+    ],
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "@prisma/client"
+    ]
+  }
+}

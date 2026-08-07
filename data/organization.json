@@ -1,0 +1,26 @@
+{
+  "topLevels": [
+    { "id": "pelindung", "jabatan": "Pelindung", "nama": "Bpk. Ardi" },
+    { "id": "pembina", "jabatan": "Pembina", "nama": "Bpk. Yanuar" },
+    { "id": "ketua", "jabatan": "Ketua", "nama": "Rakha" },
+    { "id": "wakil", "jabatan": "Wakil", "nama": "Nabila" }
+  ],
+  "branches": [
+    [
+      { "id": "sekretaris1", "jabatan": "Sekretaris 1", "nama": "Lintang" },
+      { "id": "sekretaris2", "jabatan": "Sekretaris 2", "nama": "Nawang" }
+    ],
+    [
+      { "id": "bendahara1", "jabatan": "Bendahara 1", "nama": "Meichel" },
+      { "id": "bendahara2", "jabatan": "Bendahara 2", "nama": "Lala" }
+    ],
+    [
+      { "id": "humas1", "jabatan": "Humas 1", "nama": "Julio" },
+      { "id": "humas2", "jabatan": "Humas 2", "nama": "Olfat" }
+    ]
+  ],
+  "bottomLevel": {
+    "jabatan": "Anggota",
+    "nama": "Remaja RT 06"
+  }
+}

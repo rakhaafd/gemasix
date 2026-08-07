@@ -1,0 +1,87 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  /* ── Fonts ─────────────────────────── */
+  /* CSS variables diinjeksi oleh next/font/google di layout.tsx */
+  --font-display: var(--font-display);
+
+  /* ── Primary ───────────────────────── */
+  --color-primary-900: #0d1b2a;
+  --color-primary-800: #1b263b;
+  --color-primary-700: #243447;
+  --color-primary-600: #2c4460;
+  --color-primary-500: #1976d2;
+  --color-primary-400: #42a5f5;
+  --color-primary-300: #64b5f6;
+  --color-primary-200: #90caf9;
+  --color-primary-100: #bbdefb;
+
+  /* ── Neutral ───────────────────────── */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+
+  /* ── Accent Red ────────────────────── */
+  --color-accent-red-600: #d62828;
+  --color-accent-red-500: #ef4444;
+  --color-accent-red-100: #fee2e2;
+
+  /* ── Accent Yellow ─────────────────── */
+  --color-accent-yellow-500: #ffc107;
+  --color-accent-yellow-400: #ffca28;
+  --color-accent-yellow-100: #fff9c4;
+
+  /* ── Accent Orange ─────────────────── */
+  --color-accent-orange-500: #ff9800;
+  --color-accent-orange-100: #ffe0b2;
+
+  /* ── Accent Green ──────────────────── */
+  --color-accent-green-500: #43a047;
+  --color-accent-green-100: #c8e6c9;
+}
+
+* {
+  font-family: var(--font-display);
+}
+
+/* ── Base ──────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans), sans-serif;
+  background-color: #f8fafc;
+  color: #0d1b2a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ─────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #0d1b2a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1976d2;
+  border-radius: 99px;
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
