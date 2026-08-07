@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { AdminPageHeader, Button, Card, CardSkeleton, Pagination } from "@/components/ui";
+import { AdminPageHeader, Button, Card, CardSkeleton, Pagination, ModalWrapper } from "@/components/ui";
 import { InstagramCardPreview } from "@/components/ui/InstagramCardPreview";
-import { MessageCircle, Share, Loader2, Calendar, Trash2 } from "lucide-react";
+import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download } from "lucide-react";
 import { collection, query, orderBy, onSnapshot, Timestamp, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { clientDb } from "@/lib/firebase-client";
 import { toPng } from "html-to-image";
@@ -26,6 +26,11 @@ export default function AdminMessagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
+  // State untuk Modal Lihat Gambar
+  const [selectedModalMessage, setSelectedModalMessage] = useState<MessageItem | null>(null);
+  const [modalImageDataUrl, setModalImageDataUrl] = useState<string | null>(null);
+  const [isGeneratingModalImage, setIsGeneratingModalImage] = useState(false);
+
   // Fetch data real-time
   useEffect(() => {
     const q = query(collection(clientDb, "messages"), orderBy("createdAt", "desc"));
@@ -43,6 +48,43 @@ export default function AdminMessagesPage() {
 
     return () => unsubscribe();
   }, []);
+
+  const handleOpenPreview = async (msg: MessageItem) => {
+    setSelectedModalMessage(msg);
+    setPreviewMessage(msg.message);
+    setIsGeneratingModalImage(true);
+    setModalImageDataUrl(null);
+
+    // Beri waktu render state ke DOM
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    if (!previewRef.current) {
+      setIsGeneratingModalImage(false);
+      return;
+    }
+
+    try {
+      const dataUrl = await toPng(previewRef.current, {
+        quality: 1,
+        pixelRatio: 2,
+        cacheBust: true,
+      });
+      setModalImageDataUrl(dataUrl);
+    } catch (err) {
+      console.error("Gagal membuat preview gambar:", err);
+      showError("Gagal!", "Gagal memuat pratinjau gambar.");
+    } finally {
+      setIsGeneratingModalImage(false);
+    }
+  };
+
+  const handleDownloadImage = (msgId: string) => {
+    if (!modalImageDataUrl) return;
+    const link = document.createElement("a");
+    link.download = `gemasix-ngl-${msgId}.png`;
+    link.href = modalImageDataUrl;
+    link.click();
+  };
 
   const handleShareToIG = async (msg: MessageItem) => {
     if (!previewRef.current) return;
@@ -162,6 +204,56 @@ export default function AdminMessagesPage() {
       <div className="fixed -left-[9999px] top-0 pointer-events-none">
         <InstagramCardPreview ref={previewRef} message={previewMessage} />
       </div>
+
+      {/* Modal Lihat Gambar */}
+      <ModalWrapper
+        isOpen={!!selectedModalMessage}
+        onClose={() => {
+          setSelectedModalMessage(null);
+          setModalImageDataUrl(null);
+        }}
+        title="Pratinjau Story NGL"
+      >
+        <div className="flex flex-col items-center">
+          {isGeneratingModalImage ? (
+            <div className="py-24 flex flex-col items-center justify-center text-primary-500 gap-3">
+              <Loader2 size={36} className="animate-spin" />
+              <p className="text-sm font-semibold text-neutral-600">Membuat gambar Story...</p>
+            </div>
+          ) : modalImageDataUrl ? (
+            <div className="w-full flex flex-col items-center">
+              <div className="relative max-w-[280px] sm:max-w-[320px] rounded-3xl overflow-hidden shadow-2xl border-4 border-primary-900">
+                <img
+                  src={modalImageDataUrl}
+                  alt="Pratinjau NGL Story"
+                  className="w-full h-auto object-contain block"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 w-full mt-6">
+                <Button
+                  as="button"
+                  variant="secondary"
+                  onClick={() => selectedModalMessage && handleDownloadImage(selectedModalMessage.id)}
+                  className="flex-1 justify-center py-2.5 text-sm"
+                >
+                  <Download size={16} /> Download
+                </Button>
+                <Button
+                  as="button"
+                  variant="primary"
+                  onClick={() => selectedModalMessage && handleShareToIG(selectedModalMessage)}
+                  className="flex-1 justify-center py-2.5 text-sm"
+                >
+                  <Share size={16} /> Share IG
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-neutral-500 py-8">Gagal menampilkan gambar.</p>
+          )}
+        </div>
+      </ModalWrapper>
       
       <div className="bg-white rounded-[2rem] border border-neutral-200 shadow-sm overflow-hidden p-6 sm:p-8">
         
@@ -173,7 +265,7 @@ export default function AdminMessagesPage() {
               variant="outline" 
               onClick={handleDeleteAll}
               disabled={isDeletingAll}
-              className="!text-red-500 hover:!bg-red-50 !border-red-200 text-sm py-2 px-4 h-auto shadow-none"
+              className="!text-red-500 hover:!bg-red-500 hover:!text-white !border-red-200 text-sm py-2 px-4 h-auto shadow-none"
             >
               {isDeletingAll ? (
                 <><Loader2 size={16} className="animate-spin mr-2" /> Menghapus...</>
@@ -233,21 +325,29 @@ export default function AdminMessagesPage() {
                   </p>
                 </div>
                 
-                <div className="mt-auto pt-4">
+                <div className="mt-auto pt-4 flex items-center gap-2">
+                  <Button 
+                    as="button"
+                    variant="secondary"
+                    onClick={() => handleOpenPreview(msg)}
+                    className="flex-1 justify-center py-2 text-xs font-bold"
+                  >
+                    <Eye size={14} /> Lihat
+                  </Button>
                   <Button 
                     as="button"
                     variant="primary"
                     onClick={() => handleShareToIG(msg)}
                     disabled={isSharingId === msg.id}
-                    className="w-full justify-center"
+                    className="flex-1 justify-center py-2 text-xs font-bold"
                   >
                     {isSharingId === msg.id ? (
                       <>
-                        <Loader2 size={16} className="animate-spin" /> Load...
+                        <Loader2 size={14} className="animate-spin" /> Load...
                       </>
                     ) : (
                       <>
-                        <Share size={16} /> Share IG
+                        <Share size={14} /> Share IG
                       </>
                     )}
                   </Button>
