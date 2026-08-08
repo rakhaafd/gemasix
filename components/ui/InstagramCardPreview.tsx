@@ -5,12 +5,13 @@ import { Quote } from "lucide-react";
 
 interface InstagramCardPreviewProps {
   message: string;
+  logoSrc?: string; // data URL logo, di-preload dari parent
 }
 
 export const InstagramCardPreview = forwardRef<
   HTMLDivElement,
   InstagramCardPreviewProps
->(({ message }, ref) => {
+>(({ message, logoSrc }, ref) => {
   const fontSize =
     message.length <= 80
       ? "text-[72px]"
@@ -54,12 +55,17 @@ export const InstagramCardPreview = forwardRef<
 
         {/* Header */}
         <div className="relative flex items-center gap-6">
-          <img
-            src="/images/logos.png"
-            alt="GEMASIX"
-            crossOrigin="anonymous"
-            className="w-24 h-24 object-contain"
-          />
+          {logoSrc ? (
+            <img
+              src={logoSrc}
+              alt="GEMASIX"
+              className="w-24 h-24 object-contain"
+            />
+          ) : (
+            // Fallback placeholder kalau logo belum ke-preload,
+            // supaya layout tidak berubah/collapse
+            <div className="w-24 h-24" />
+          )}
           <div>
             <h1 className="text-white text-4xl font-black tracking-tight">
               GEMASIX

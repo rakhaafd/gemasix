@@ -15,11 +15,31 @@ interface MessageItem {
   createdAt: Timestamp;
 }
 
+// Convert file di /public jadi data URL base64.
+// Dilakukan sekali saat komponen mount, hasilnya di-cache di state.
+// Ini menghilangkan ketergantungan pada network/CORS saat proses screenshot.
+async function fetchAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.error("Gagal preload gambar:", url, err);
+    return null;
+  }
+}
+
 async function waitForRenderReady(container: HTMLElement) {
   if (document.fonts?.ready) {
     try {
       await document.fonts.ready;
     } catch {
+      // ignore
     }
   }
 
@@ -49,9 +69,20 @@ export default function AdminMessagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
+  // Logo di-preload jadi base64 sekali di awal, dipakai berulang untuk semua capture
+  const [logoDataUrl, setLogoDataUrl] = useState<string | undefined>(undefined);
+
   const [selectedModalMessage, setSelectedModalMessage] = useState<MessageItem | null>(null);
   const [modalImageDataUrl, setModalImageDataUrl] = useState<string | null>(null);
   const [isGeneratingModalImage, setIsGeneratingModalImage] = useState(false);
+
+  // Preload logo saat halaman pertama kali dibuka
+  useEffect(() => {
+    fetchAsDataUrl("/images/logos.png").then((dataUrl) => {
+      if (dataUrl) setLogoDataUrl(dataUrl);
+    });
+  }, []);
+
   useEffect(() => {
     const q = query(collection(clientDb, "messages"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -71,6 +102,15 @@ export default function AdminMessagesPage() {
 
   const generateCardImage = async (): Promise<string | null> => {
     if (!previewRef.current) return null;
+
+    // Kalau logo belum ke-preload (jarang terjadi, biasanya sudah selesai
+    // duluan sebelum user sempat klik tombol), coba fetch ulang sebentar.
+    if (!logoDataUrl) {
+      const dataUrl = await fetchAsDataUrl("/images/logos.png");
+      if (dataUrl) setLogoDataUrl(dataUrl);
+      // beri waktu React commit logo baru ke DOM
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
 
     await waitForRenderReady(previewRef.current);
 
@@ -128,6 +168,7 @@ export default function AdminMessagesPage() {
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const file = new File([blob], `gemasix-ngl-${msg.id}.png`, { type: "image/png" });
+
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
@@ -212,11 +253,11 @@ export default function AdminMessagesPage() {
 
   return (
     <div>
-      <AdminPageHeader 
-        title="Pesan NGL (Anonim)" 
-        description="Saran, kritik, dan masukan anonim dari warga atau anggota." 
+      <AdminPageHeader
+        title="Pesan NGL (Anonim)"
+        description="Saran, kritik, dan masukan anonim dari warga atau anggota."
       />
-      
+
       {/* Off-screen Template untuk Screenshot */}
       <div
         style={{
@@ -228,7 +269,11 @@ export default function AdminMessagesPage() {
           pointerEvents: "none",
         }}
       >
-        <InstagramCardPreview ref={previewRef} message={previewMessage} />
+        <InstagramCardPreview
+          ref={previewRef}
+          message={previewMessage}
+          logoSrc={logoDataUrl}
+        />
       </div>
 
       {/* Modal Lihat Gambar */}
@@ -280,15 +325,15 @@ export default function AdminMessagesPage() {
           )}
         </div>
       </ModalWrapper>
-      
+
       <div className="bg-white rounded-[2rem] border border-neutral-200 shadow-sm overflow-hidden p-6 sm:p-8">
-        
+
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold text-primary-900">Daftar Pesan Masuk</h2>
           {messages.length > 0 && !isLoading && (
-            <Button 
+            <Button
               as="button"
-              variant="outline" 
+              variant="outline"
               onClick={handleDeleteAll}
               disabled={isDeletingAll}
               className="!text-red-500 hover:!bg-red-500 hover:!text-white !border-red-200 text-sm py-2 px-4 h-auto shadow-none"
@@ -326,60 +371,60 @@ export default function AdminMessagesPage() {
               {messages
                 .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
                 .map((msg) => (
-              <div 
-                key={msg.id} 
-                className="flex flex-col h-full bg-white border-2 border-primary-900 rounded-2xl p-6 shadow-[4px_4px_0_var(--color-primary-900)] hover:shadow-[6px_6px_0_var(--color-primary-900)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-              >
-                <div className="flex items-center justify-between gap-2 text-xs font-bold text-primary-900 mb-4 pb-3 border-b-2 border-primary-100">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-primary-500" />
-                    {formatDate(msg.createdAt)}
+                  <div
+                    key={msg.id}
+                    className="flex flex-col h-full bg-white border-2 border-primary-900 rounded-2xl p-6 shadow-[4px_4px_0_var(--color-primary-900)] hover:shadow-[6px_6px_0_var(--color-primary-900)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-2 text-xs font-bold text-primary-900 mb-4 pb-3 border-b-2 border-primary-100">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={16} className="text-primary-500" />
+                        {formatDate(msg.createdAt)}
+                      </div>
+                      <button
+                        onClick={() => handleDelete(msg.id)}
+                        disabled={deletingId === msg.id}
+                        className="text-neutral-400 hover:text-red-500 transition-colors p-1"
+                        title="Hapus Pesan"
+                      >
+                        {deletingId === msg.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      </button>
+                    </div>
+
+                    <div className="flex-1 mb-6">
+                      <p className="text-primary-900 font-medium leading-relaxed whitespace-pre-wrap line-clamp-6">
+                        "{msg.message}"
+                      </p>
+                    </div>
+
+                    <div className="mt-auto pt-4 flex items-center gap-2">
+                      <Button
+                        as="button"
+                        variant="secondary"
+                        onClick={() => handleOpenPreview(msg)}
+                        className="flex-1 justify-center py-2 text-xs font-bold"
+                      >
+                        <Eye size={14} /> Lihat
+                      </Button>
+                      <Button
+                        as="button"
+                        variant="primary"
+                        onClick={() => handleShareToIG(msg)}
+                        disabled={isSharingId === msg.id}
+                        className="flex-1 justify-center py-2 text-xs font-bold"
+                      >
+                        {isSharingId === msg.id ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" /> Load...
+                          </>
+                        ) : (
+                          <>
+                            <Share size={14} /> Share IG
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <button 
-                    onClick={() => handleDelete(msg.id)}
-                    disabled={deletingId === msg.id}
-                    className="text-neutral-400 hover:text-red-500 transition-colors p-1"
-                    title="Hapus Pesan"
-                  >
-                    {deletingId === msg.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                  </button>
-                </div>
-                
-                <div className="flex-1 mb-6">
-                  <p className="text-primary-900 font-medium leading-relaxed whitespace-pre-wrap line-clamp-6">
-                    "{msg.message}"
-                  </p>
-                </div>
-                
-                <div className="mt-auto pt-4 flex items-center gap-2">
-                  <Button 
-                    as="button"
-                    variant="secondary"
-                    onClick={() => handleOpenPreview(msg)}
-                    className="flex-1 justify-center py-2 text-xs font-bold"
-                  >
-                    <Eye size={14} /> Lihat
-                  </Button>
-                  <Button 
-                    as="button"
-                    variant="primary"
-                    onClick={() => handleShareToIG(msg)}
-                    disabled={isSharingId === msg.id}
-                    className="flex-1 justify-center py-2 text-xs font-bold"
-                  >
-                    {isSharingId === msg.id ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" /> Load...
-                      </>
-                    ) : (
-                      <>
-                        <Share size={14} /> Share IG
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-              ))}
+                ))}
             </div>
 
             <Pagination
