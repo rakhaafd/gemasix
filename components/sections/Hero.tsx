@@ -67,7 +67,7 @@ export default function Hero() {
               <Button href="#program" variant="primary" size="lg" icon={ArrowRight}>
                 Lihat Program Kerja
               </Button>
-              <Button href="#tentang" variant="outline" size="lg">
+              <Button href="#tentang" variant="secondary" size="lg">
                 Tentang Kami
               </Button>
             </motion.div>
