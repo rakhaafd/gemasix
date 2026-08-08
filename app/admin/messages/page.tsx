@@ -15,9 +15,6 @@ interface MessageItem {
   createdAt: Timestamp;
 }
 
-// Convert file di /public jadi data URL base64.
-// Dilakukan sekali saat komponen mount, hasilnya di-cache di state.
-// Ini menghilangkan ketergantungan pada network/CORS saat proses screenshot.
 async function fetchAsDataUrl(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
@@ -69,7 +66,6 @@ export default function AdminMessagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
-  // Logo di-preload jadi base64 sekali di awal, dipakai berulang untuk semua capture
   const [logoDataUrl, setLogoDataUrl] = useState<string | undefined>(undefined);
 
   const [selectedModalMessage, setSelectedModalMessage] = useState<MessageItem | null>(null);

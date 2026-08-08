@@ -5,7 +5,7 @@ import { Quote } from "lucide-react";
 
 interface InstagramCardPreviewProps {
   message: string;
-  logoSrc?: string; // data URL logo, di-preload dari parent
+  logoSrc?: string;
 }
 
 export const InstagramCardPreview = forwardRef<
@@ -22,48 +22,40 @@ export const InstagramCardPreview = forwardRef<
   return (
     <div
       ref={ref}
-      className="relative w-[1080px] h-[1920px] overflow-hidden flex items-center justify-center bg-primary-900"
+      className="relative w-[1080px] h-[1920px] overflow-hidden flex items-center justify-center bg-primary-900 bg-gradient-to-b from-primary-900 via-primary-800 to-primary-900"
       style={{
         fontFamily: "var(--font-display), var(--font-sans), sans-serif",
       }}
     >
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary-900 via-primary-800 to-primary-900" />
-
-      {/* Glow */}
-      <div className="absolute -top-56 -left-56 w-[700px] h-[700px] rounded-full bg-primary-500 opacity-30 blur-[220px]" />
-      <div className="absolute -bottom-56 -right-56 w-[700px] h-[700px] rounded-full bg-accent-yellow-500 opacity-20 blur-[220px]" />
-
-      {/* Card - Glass effect */}
+      {/* Glow - pakai gradient biasa, TANPA filter blur */}
       <div
-        className="relative w-[860px] rounded-[56px] px-20 py-24 backdrop-blur-2xl border"
+        className="absolute -top-[150px] -left-[150px] w-[700px] h-[700px] rounded-full"
         style={{
-          backgroundColor: "rgba(255,255,255,0.08)",
-          borderColor: "rgba(255,255,255,0.18)",
-          boxShadow:
-            "0 50px 120px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25)",
+          backgroundImage:
+            "radial-gradient(circle, rgba(59,130,246,0.35) 0%, rgba(59,130,246,0) 70%)",
         }}
-      >
-        {/* subtle inner glass sheen */}
-        <div
-          className="pointer-events-none absolute inset-0 rounded-[56px] opacity-60"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 40%)",
-          }}
-        />
+      />
+      <div
+        className="absolute -bottom-[150px] -right-[150px] w-[700px] h-[700px] rounded-full"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(234,179,8,0.25) 0%, rgba(234,179,8,0) 70%)",
+        }}
+      />
 
+      {/* Card - solid background, TANPA backdrop-blur */}
+      <div className="relative w-[860px] rounded-[56px] px-20 py-24 bg-primary-900/90 border border-white/20 shadow-[0_30px_80px_rgba(0,0,0,0.4)] flex flex-col">
         {/* Header */}
-        <div className="relative flex items-center gap-6">
+        <div className="flex items-center gap-6">
           {logoSrc ? (
             <img
               src={logoSrc}
               alt="GEMASIX"
+              width={96}
+              height={96}
               className="w-24 h-24 object-contain"
             />
           ) : (
-            // Fallback placeholder kalau logo belum ke-preload,
-            // supaya layout tidak berubah/collapse
             <div className="w-24 h-24" />
           )}
           <div>
@@ -80,8 +72,8 @@ export const InstagramCardPreview = forwardRef<
         <div className="relative mt-20 min-h-[760px] flex items-center">
           <Quote
             size={140}
-            className="absolute -top-10 left-0 text-white/10"
             strokeWidth={1.5}
+            className="absolute -top-10 left-0 text-white/10"
           />
           <p
             className={`${fontSize} relative z-10 leading-[1.2] font-bold text-white whitespace-pre-wrap break-words`}
@@ -91,22 +83,16 @@ export const InstagramCardPreview = forwardRef<
         </div>
 
         {/* Footer */}
-        <div className="relative mt-16 border-t border-white/15 pt-10 flex justify-between items-center">
+        <div className="relative mt-16 pt-10 border-t border-white/15 flex justify-between items-center">
           <div>
             <p className="text-white/60 text-2xl">
               Kirim pesan anonim kamu di
             </p>
             <p className="text-accent-yellow-500 text-3xl font-bold">
-              gemasix.vercel.app
+              gemasix.my.id/ngl
             </p>
           </div>
-          <div
-            className="rounded-full px-7 py-4 border"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.1)",
-              borderColor: "rgba(255,255,255,0.2)",
-            }}
-          >
+          <div className="rounded-full px-7 py-4 bg-white/10 border border-white/20">
             <span className="text-white text-xl font-semibold tracking-wider">
               #NGL
             </span>
