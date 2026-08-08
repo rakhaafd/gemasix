@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import { Sparkles, Quote } from "lucide-react";
+import { Quote } from "lucide-react";
 
 interface InstagramCardPreviewProps {
   message: string;
@@ -57,6 +57,7 @@ export const InstagramCardPreview = forwardRef<
           <img
             src="/images/logos.png"
             alt="GEMASIX"
+            crossOrigin="anonymous"
             className="w-24 h-24 object-contain"
           />
           <div>

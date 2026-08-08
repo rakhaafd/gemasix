@@ -15,6 +15,37 @@ interface MessageItem {
   createdAt: Timestamp;
 }
 
+// Helper: pastikan font & semua <img> di dalam container sudah selesai
+// render/loading sebelum html-to-image mengambil snapshot.
+// Ini yang paling penting untuk fix "gambar kepotong di HP tertentu".
+async function waitForRenderReady(container: HTMLElement) {
+  // 1. Tunggu semua font (termasuk font custom) selesai load
+  if (document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // ignore, lanjut saja
+    }
+  }
+
+  // 2. Tunggu semua <img> di dalam container selesai load
+  const imgs = Array.from(container.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // tetap lanjut walau gambar gagal load
+      });
+    })
+  );
+
+  // 3. Tunggu 2 frame browser (memastikan layout & paint benar-benar selesai)
+  await new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  );
+}
+
 export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,8 +86,8 @@ export default function AdminMessagesPage() {
     setIsGeneratingModalImage(true);
     setModalImageDataUrl(null);
 
-    // Beri waktu render state ke DOM
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    // Beri waktu React commit state ke DOM dulu
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     if (!previewRef.current) {
       setIsGeneratingModalImage(false);
@@ -64,10 +95,15 @@ export default function AdminMessagesPage() {
     }
 
     try {
+      // Tunggu font + gambar logo benar-benar siap sebelum capture
+      await waitForRenderReady(previewRef.current);
+
       const dataUrl = await toPng(previewRef.current, {
         quality: 1,
         pixelRatio: 2,
         cacheBust: true,
+        width: 1080,
+        height: 1920,
       });
       setModalImageDataUrl(dataUrl);
     } catch (err) {
@@ -88,20 +124,27 @@ export default function AdminMessagesPage() {
 
   const handleShareToIG = async (msg: MessageItem) => {
     if (!previewRef.current) return;
-    
+
     setIsSharingId(msg.id);
-    
+
     // Set pesan ke template preview off-screen
     setPreviewMessage(msg.message);
-    
-    // Beri waktu sejenak agar React selesai render state baru ke DOM
-    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Beri waktu React commit state baru ke DOM
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     try {
+      if (!previewRef.current) return;
+
+      // Tunggu font + gambar logo benar-benar siap sebelum capture
+      await waitForRenderReady(previewRef.current);
+
       const dataUrl = await toPng(previewRef.current, {
         quality: 1,
         pixelRatio: 2, // Biar tidak pecah
         cacheBust: true,
+        width: 1080,
+        height: 1920,
       });
 
       // Convert dataUrl to Blob & File for Web Share API
@@ -175,7 +218,7 @@ export default function AdminMessagesPage() {
     });
 
     if (!isConfirmed) return;
-    
+
     setIsDeletingAll(true);
     try {
       const batch = writeBatch(clientDb);
@@ -201,7 +244,19 @@ export default function AdminMessagesPage() {
       />
       
       {/* Off-screen Template untuk HTML-to-Image */}
-      <div className="fixed -left-[9999px] top-0 pointer-events-none">
+      {/* PENTING: gunakan opacity:0 + zIndex:-1, JANGAN posisi -9999px.
+          Posisi ekstrem far off-screen bisa membuat sebagian browser mobile
+          tidak merender elemen secara penuh sebelum di-capture. */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          opacity: 0,
+          zIndex: -1,
+          pointerEvents: "none",
+        }}
+      >
         <InstagramCardPreview ref={previewRef} message={previewMessage} />
       </div>
 
