@@ -6,7 +6,7 @@ import { InstagramCardPreview } from "@/components/ui/InstagramCardPreview";
 import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download } from "lucide-react";
 import { collection, query, orderBy, onSnapshot, Timestamp, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { clientDb } from "@/lib/firebase-client";
-import { toPng } from "html-to-image";
+import { domToPng } from "modern-screenshot";
 import { confirmAlert, showSuccess, showError } from "@/lib/swal";
 
 interface MessageItem {
@@ -15,32 +15,24 @@ interface MessageItem {
   createdAt: Timestamp;
 }
 
-// Helper: pastikan font & semua <img> di dalam container sudah selesai
-// render/loading sebelum html-to-image mengambil snapshot.
-// Ini yang paling penting untuk fix "gambar kepotong di HP tertentu".
 async function waitForRenderReady(container: HTMLElement) {
-  // 1. Tunggu semua font (termasuk font custom) selesai load
   if (document.fonts?.ready) {
     try {
       await document.fonts.ready;
     } catch {
-      // ignore, lanjut saja
     }
   }
 
-  // 2. Tunggu semua <img> di dalam container selesai load
   const imgs = Array.from(container.querySelectorAll("img"));
   await Promise.all(
     imgs.map((img) => {
       if (img.complete && img.naturalWidth > 0) return Promise.resolve();
       return new Promise<void>((resolve) => {
         img.onload = () => resolve();
-        img.onerror = () => resolve(); // tetap lanjut walau gambar gagal load
+        img.onerror = () => resolve();
       });
     })
   );
-
-  // 3. Tunggu 2 frame browser (memastikan layout & paint benar-benar selesai)
   await new Promise((resolve) =>
     requestAnimationFrame(() => requestAnimationFrame(resolve))
   );
@@ -57,12 +49,9 @@ export default function AdminMessagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
-  // State untuk Modal Lihat Gambar
   const [selectedModalMessage, setSelectedModalMessage] = useState<MessageItem | null>(null);
   const [modalImageDataUrl, setModalImageDataUrl] = useState<string | null>(null);
   const [isGeneratingModalImage, setIsGeneratingModalImage] = useState(false);
-
-  // Fetch data real-time
   useEffect(() => {
     const q = query(collection(clientDb, "messages"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -80,31 +69,32 @@ export default function AdminMessagesPage() {
     return () => unsubscribe();
   }, []);
 
+  const generateCardImage = async (): Promise<string | null> => {
+    if (!previewRef.current) return null;
+
+    await waitForRenderReady(previewRef.current);
+
+    const dataUrl = await domToPng(previewRef.current, {
+      quality: 1,
+      scale: 2,
+      width: 1080,
+      height: 1920,
+      backgroundColor: undefined,
+    });
+
+    return dataUrl;
+  };
+
   const handleOpenPreview = async (msg: MessageItem) => {
     setSelectedModalMessage(msg);
     setPreviewMessage(msg.message);
     setIsGeneratingModalImage(true);
     setModalImageDataUrl(null);
 
-    // Beri waktu React commit state ke DOM dulu
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    if (!previewRef.current) {
-      setIsGeneratingModalImage(false);
-      return;
-    }
-
     try {
-      // Tunggu font + gambar logo benar-benar siap sebelum capture
-      await waitForRenderReady(previewRef.current);
-
-      const dataUrl = await toPng(previewRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        cacheBust: true,
-        width: 1080,
-        height: 1920,
-      });
+      const dataUrl = await generateCardImage();
       setModalImageDataUrl(dataUrl);
     } catch (err) {
       console.error("Gagal membuat preview gambar:", err);
@@ -127,32 +117,17 @@ export default function AdminMessagesPage() {
 
     setIsSharingId(msg.id);
 
-    // Set pesan ke template preview off-screen
     setPreviewMessage(msg.message);
 
-    // Beri waktu React commit state baru ke DOM
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     try {
-      if (!previewRef.current) return;
+      const dataUrl = await generateCardImage();
+      if (!dataUrl) return;
 
-      // Tunggu font + gambar logo benar-benar siap sebelum capture
-      await waitForRenderReady(previewRef.current);
-
-      const dataUrl = await toPng(previewRef.current, {
-        quality: 1,
-        pixelRatio: 2, // Biar tidak pecah
-        cacheBust: true,
-        width: 1080,
-        height: 1920,
-      });
-
-      // Convert dataUrl to Blob & File for Web Share API
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const file = new File([blob], `gemasix-ngl-${msg.id}.png`, { type: "image/png" });
-
-      // Jika browser mendukung Web Share API (misal di Smartphone/HP)
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
@@ -160,7 +135,6 @@ export default function AdminMessagesPage() {
           text: "Pesan Anonim GEMASIX",
         });
       } else {
-        // Fallback untuk Desktop: download otomatis
         const link = document.createElement("a");
         link.download = `gemasix-ngl-${msg.id}.png`;
         link.href = dataUrl;
@@ -243,10 +217,7 @@ export default function AdminMessagesPage() {
         description="Saran, kritik, dan masukan anonim dari warga atau anggota." 
       />
       
-      {/* Off-screen Template untuk HTML-to-Image */}
-      {/* PENTING: gunakan opacity:0 + zIndex:-1, JANGAN posisi -9999px.
-          Posisi ekstrem far off-screen bisa membuat sebagian browser mobile
-          tidak merender elemen secara penuh sebelum di-capture. */}
+      {/* Off-screen Template untuk Screenshot */}
       <div
         style={{
           position: "fixed",
