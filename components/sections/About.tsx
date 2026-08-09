@@ -24,6 +24,7 @@ export default function About() {
             <h2 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] mb-6">
               Karang Taruna{" "}
               <HighlightText color="yellow" rotate="left">Genuk Baru</HighlightText>{" "}
+              <br />
               RT 06 RW 07
             </h2>
 

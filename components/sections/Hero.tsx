@@ -38,14 +38,14 @@ export default function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="font-display font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight text-white mb-6"
+              className="font-display font-bold text-4xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight text-white mb-6"
             >
-              Bersama{" "}
+              Muda{" "}
               <HighlightText color="yellow" rotate="left">Bergerak</HighlightText>
               ,{" "}
               <br />
-              <span className="text-primary-300">Bersatu</span>{" "}
-              <HighlightText color="blue" rotate="right">Maju</HighlightText>
+              <span className="text-primary-300">Lingkungan</span>{" "}
+              <HighlightText color="blue" rotate="right">Kuat!</HighlightText>
             </motion.h1>
 
             <motion.p
@@ -54,7 +54,7 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-white/70 text-base leading-relaxed max-w-lg mb-10"
             >
-              Bersama menciptakan lingkungan yang lebih baik melalui semangat gotong royong, kepedulian sosial, serta berbagai kegiatan yang menginspirasi dan bermanfaat bagi masyarakat.
+              Bersama menciptakan lingkungan yang lebih baik melalui semangat gotong royong, kepedulian sosial, serta berbagai kegiatan yang bermanfaat bagi masyarakat.
             </motion.p>
 
             {/* CTA Buttons */}

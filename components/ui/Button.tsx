@@ -33,9 +33,9 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "px-4 py-2 text-xs gap-1.5",
-  md: "px-6 py-3 text-sm gap-2",
-  lg: "px-8 py-4 text-base gap-3",
+  sm: "px-3 sm:px-4 py-1.5 sm:py-2 text-xs gap-1.5",
+  md: "px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm gap-1.5 sm:gap-2",
+  lg: "px-5 sm:px-8 py-2.5 sm:py-3.5 text-sm sm:text-base gap-2 sm:gap-3",
 };
 
 const Button = forwardRef<ButtonElement, ButtonProps>(
@@ -53,7 +53,7 @@ const Button = forwardRef<ButtonElement, ButtonProps>(
     ref
   ) => {
     const classes = cn(
-      "inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 whitespace-nowrap",
+      "inline-flex items-center justify-center font-bold rounded-xl sm:rounded-2xl transition-all duration-200 whitespace-nowrap",
       variantClasses[variant],
       sizeClasses[size],
       className

@@ -297,22 +297,24 @@ export default function AdminMessagesPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-3 w-full mt-6">
+              <div className="flex items-center gap-2 sm:gap-3 w-full mt-4 sm:mt-6">
                 <Button
                   as="button"
                   variant="secondary"
+                  size="sm"
                   onClick={() => selectedModalMessage && handleDownloadImage(selectedModalMessage.id)}
-                  className="flex-1 justify-center py-2.5 text-sm"
+                  className="flex-1 justify-center py-2 text-xs sm:text-sm"
                 >
-                  <Download size={16} /> Download
+                  <Download size={15} /> Download
                 </Button>
                 <Button
                   as="button"
                   variant="primary"
+                  size="sm"
                   onClick={() => selectedModalMessage && handleShareToIG(selectedModalMessage)}
-                  className="flex-1 justify-center py-2.5 text-sm"
+                  className="flex-1 justify-center py-2 text-xs sm:text-sm"
                 >
-                  <Share size={16} /> Share IG
+                  <Share size={15} /> Share IG
                 </Button>
               </div>
             </div>
@@ -330,14 +332,15 @@ export default function AdminMessagesPage() {
             <Button
               as="button"
               variant="outline"
+              size="sm"
               onClick={handleDeleteAll}
               disabled={isDeletingAll}
-              className="!text-red-500 hover:!bg-red-500 hover:!text-white !border-red-200 text-sm py-2 px-4 h-auto shadow-none"
+              className="!text-red-500 hover:!bg-red-500 hover:!text-white !border-red-200 text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4 h-auto shadow-none"
             >
               {isDeletingAll ? (
-                <><Loader2 size={16} className="animate-spin mr-2" /> Menghapus...</>
+                <><Loader2 size={14} className="animate-spin mr-1.5" /> Menghapus...</>
               ) : (
-                <><Trash2 size={16} className="mr-2" /> Hapus Semua</>
+                <><Trash2 size={14} className="mr-1.5" /> Hapus Semua</>
               )}
             </Button>
           )}
@@ -392,29 +395,31 @@ export default function AdminMessagesPage() {
                       </p>
                     </div>
 
-                    <div className="mt-auto pt-4 flex items-center gap-2">
+                    <div className="mt-auto pt-3 sm:pt-4 flex items-center gap-2">
                       <Button
                         as="button"
                         variant="secondary"
+                        size="sm"
                         onClick={() => handleOpenPreview(msg)}
-                        className="flex-1 justify-center py-2 text-xs font-bold"
+                        className="flex-1 justify-center py-1.5 sm:py-2 text-xs font-semibold"
                       >
-                        <Eye size={14} /> Lihat
+                        <Eye size={13} /> Lihat
                       </Button>
                       <Button
                         as="button"
                         variant="primary"
+                        size="sm"
                         onClick={() => handleShareToIG(msg)}
                         disabled={isSharingId === msg.id}
-                        className="flex-1 justify-center py-2 text-xs font-bold"
+                        className="flex-1 justify-center py-1.5 sm:py-2 text-xs font-semibold"
                       >
                         {isSharingId === msg.id ? (
                           <>
-                            <Loader2 size={14} className="animate-spin" /> Load...
+                            <Loader2 size={13} className="animate-spin" /> Load...
                           </>
                         ) : (
                           <>
-                            <Share size={14} /> Share IG
+                            <Share size={13} /> Share IG
                           </>
                         )}
                       </Button>

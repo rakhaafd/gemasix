@@ -25,7 +25,7 @@ export default function Footer() {
           </span>
         </h2>
         <p className="text-white text-sm leading-relaxed max-w-md mb-8">
-          Mari bergerak bersama dan berikan dampak positif bagi masyarakat Genuk Baru RT 06 RW 07.
+          Mari bergerak bersama dan berikan dampak positif bagi masyarakat <span className="font-bold"> Genuk Baru RT 06 RW 07.</span>
         </p>
 
         {/* Buttons */}
