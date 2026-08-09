@@ -196,8 +196,8 @@ export default function ProgramDetailsPage() {
             )}
             
             {/* Description */}
-            <div className="prose prose-xl prose-invert max-w-none">
-              <p className="whitespace-pre-wrap text-white text-lg leading-relaxed">{program.description}</p>
+            <div className="prose prose-md prose-invert max-w-none">
+              <p className="whitespace-pre-wrap text-white text-md leading-relaxed">{program.description}</p>
             </div>
             
           </div>
