@@ -31,7 +31,7 @@ export default function Footer() {
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mb-16">
           <a
-            href="https://instagram.com"
+            href="https://instagram.com/gemasix_"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent-yellow-500 text-primary-900 font-bold text-xs rounded-xl border-2 border-accent-yellow-400 hover:bg-accent-yellow-400 transition-all duration-200"
