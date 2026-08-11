@@ -47,14 +47,22 @@ export default function NGLPage() {
     setError(null);
 
     try {
-      await addDoc(collection(clientDb, "messages"), {
-        message: validated.data.message,
-        createdAt: serverTimestamp(),
+      const res = await fetch("/api/ngl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: validated.data.message }),
       });
+
+      const resData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(resData.error || "Gagal mengirim pesan");
+      }
+
       router.push("/ngl/success");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Gagal mengirim pesan, silakan coba lagi.");
+      setError(err?.message || "Gagal mengirim pesan, silakan coba lagi.");
     } finally {
       setIsSubmitting(false);
     }

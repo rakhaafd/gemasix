@@ -3,11 +3,17 @@
 import { useEffect, useState, useRef } from "react";
 import { AdminPageHeader, Button, Card, CardSkeleton, Pagination, ModalWrapper } from "@/components/ui";
 import { InstagramCardPreview } from "@/components/ui/InstagramCardPreview";
-import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download } from "lucide-react";
+import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download, Bell, BellRing, BellOff } from "lucide-react";
 import { collection, query, orderBy, onSnapshot, Timestamp, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { clientDb } from "@/lib/firebase-client";
 import { domToPng } from "modern-screenshot";
 import { confirmAlert, showSuccess, showError } from "@/lib/swal";
+import {
+  isPushNotificationSupported,
+  checkPushSubscriptionStatus,
+  subscribeToPushNotifications,
+  unsubscribeFromPushNotifications,
+} from "@/lib/push-notification";
 
 interface MessageItem {
   id: string;
@@ -71,6 +77,17 @@ export default function AdminMessagesPage() {
   const [selectedModalMessage, setSelectedModalMessage] = useState<MessageItem | null>(null);
   const [modalImageDataUrl, setModalImageDataUrl] = useState<string | null>(null);
   const [isGeneratingModalImage, setIsGeneratingModalImage] = useState(false);
+
+  // State untuk Push Notification
+  const [isPushSupported, setIsPushSupported] = useState(false);
+  const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+  const [isTogglingPush, setIsTogglingPush] = useState(false);
+
+  // Cek status Push Notification
+  useEffect(() => {
+    setIsPushSupported(isPushNotificationSupported());
+    checkPushSubscriptionStatus().then(setIsPushSubscribed);
+  }, []);
 
   // Preload logo saat halaman pertama kali dibuka
   useEffect(() => {
@@ -247,12 +264,68 @@ export default function AdminMessagesPage() {
     }
   };
 
+  const handleTogglePush = async () => {
+    setIsTogglingPush(true);
+    if (isPushSubscribed) {
+      const confirmed = await confirmAlert({
+        title: "Matikan Notifikasi?",
+        text: "Anda tidak akan lagi menerima notifikasi pesan NGL baru di perangkat ini.",
+        confirmText: "Ya, Matikan",
+        cancelText: "Batal",
+      });
+      if (confirmed) {
+        const res = await unsubscribeFromPushNotifications();
+        if (res.success) {
+          setIsPushSubscribed(false);
+          showSuccess("Berhasil!", res.message);
+        } else {
+          showError("Gagal!", res.message);
+        }
+      }
+    } else {
+      const res = await subscribeToPushNotifications();
+      if (res.success) {
+        setIsPushSubscribed(true);
+        showSuccess("Berhasil!", res.message);
+      } else {
+        showError("Gagal!", res.message);
+      }
+    }
+    setIsTogglingPush(false);
+  };
+
   return (
     <div>
-      <AdminPageHeader
-        title="Pesan NGL (Anonim)"
-        description="Saran, kritik, dan masukan anonim dari warga atau anggota."
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <AdminPageHeader
+          title="Pesan NGL (Anonim)"
+          description="Saran, kritik, dan masukan anonim dari warga atau anggota."
+        />
+        {isPushSupported && (
+          <div className="flex-shrink-0">
+            <Button
+              as="button"
+              variant={isPushSubscribed ? "outline" : "primary"}
+              size="sm"
+              onClick={handleTogglePush}
+              disabled={isTogglingPush}
+              className={
+                isPushSubscribed
+                  ? "!text-accent-green-500 !border-accent-green-500 hover:!bg-accent-green-500/10 font-bold"
+                  : "!bg-accent-yellow-500 !text-primary-900 font-bold"
+              }
+            >
+              {isTogglingPush ? (
+                <><Loader2 size={16} className="animate-spin mr-1.5" /> Memproses...</>
+              ) : isPushSubscribed ? (
+                <><BellRing size={16} className="mr-1.5" /> Notifikasi HP Aktif</>
+              ) : (
+                <><Bell size={16} className="mr-1.5" /> Aktifkan Notif HP</>
+              )}
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Off-screen Template untuk Screenshot */}
       <div
