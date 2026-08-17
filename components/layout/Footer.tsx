@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Globe, MessageCircle } from "lucide-react";
+import { FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const whatsappNumber = "62895339023888";
+  const whatsappMessage = encodeURIComponent("Halo min Gemasix!");
 
   return (
     <footer className="border-t border-primary-800 relative overflow-hidden text-white z-10 pt-16 lg:pt-24 pb-8">
@@ -12,7 +14,7 @@ export default function Footer() {
       <div
         className="absolute inset-0 opacity-[0.07] pointer-events-none"
       />
-      
+
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
         {/* CTA Content */}
         <span className="inline-block text-xs font-bold tracking-widest text-primary-400 uppercase mb-4">
@@ -28,24 +30,36 @@ export default function Footer() {
           Mari bergerak bersama dan berikan dampak positif bagi masyarakat <span className="font-bold"> Genuk Baru RT 06 RW 07.</span>
         </p>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mb-16">
+        {/* Social icons */}
+        <div className="flex items-center justify-center gap-4 mb-16">
           <a
             href="https://instagram.com/gemasix_"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent-yellow-500 text-primary-900 font-bold text-xs rounded-xl border-2 border-accent-yellow-400 hover:bg-accent-yellow-400 transition-all duration-200"
+            aria-label="Instagram Gemasix"
+            className="inline-flex items-center justify-center w-12 h-12 bg-primary-800 text-white rounded-full border border-primary-700 hover:bg-accent-yellow-500 hover:text-primary-900 hover:border-accent-yellow-400 transition-all duration-200"
           >
-            <Globe size={16} />
-            Follow Instagram
-            <ArrowRight size={14} />
+            <FaInstagram size={20} />
           </a>
+
           <a
-            href="#ngl"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-800 text-white font-bold text-xs rounded-xl border border-primary-700 hover:bg-primary-700 hover:border-primary-500 transition-all duration-200"
+            href="https://www.tiktok.com/@karang.taruna_gemasix"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="TikTok Gemasix"
+            className="inline-flex items-center justify-center w-12 h-12 bg-primary-800 text-white rounded-full border border-primary-700 hover:bg-accent-yellow-500 hover:text-primary-900 hover:border-accent-yellow-400 transition-all duration-200"
           >
-            <MessageCircle size={16} />
-            Kirim Pesan Anonim
+            <FaTiktok size={20} />
+          </a>
+
+          <a
+            href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat WhatsApp Gemasix"
+            className="inline-flex items-center justify-center w-12 h-12 bg-primary-800 text-white rounded-full border border-primary-700 hover:bg-accent-yellow-500 hover:text-primary-900 hover:border-accent-yellow-400 transition-all duration-200"
+          >
+            <FaWhatsapp size={22} />
           </a>
         </div>
 
