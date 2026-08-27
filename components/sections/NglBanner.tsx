@@ -41,29 +41,6 @@ export default function NglBanner() {
             anggota maupun warga. Identitasmu terjaga, suaramu terdengar.
           </motion.p>
 
-          {/* Feature pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-wrap justify-center gap-3 mb-10"
-          >
-            {[
-              { icon: Lock, label: "Identitas Aman" },
-              { icon: MessageCircle, label: "Pesan Bebas" },
-              { icon: Sparkles, label: "Anti Spam" },
-            ].map((f) => (
-              <span
-                key={f.label}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-primary-800 text-xs font-semibold rounded-xl border border-neutral-200 shadow-sm"
-              >
-                <f.icon size={13} className="text-primary-500" />
-                {f.label}
-              </span>
-            ))}
-          </motion.div>
-
           {/* CTA button */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}

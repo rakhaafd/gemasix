@@ -131,11 +131,6 @@ export default function NGLPage() {
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-bold text-white/50">
-                <span className="flex items-center gap-1.5"><Lock size={14} className="text-accent-yellow-500" /> 100% Anonim</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-accent-green-500" /> Privasi Aman</span>
-              </div>
-
               <Button
                 as="button"
                 type="submit"

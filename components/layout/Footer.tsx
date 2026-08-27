@@ -17,9 +17,6 @@ export default function Footer() {
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
         {/* CTA Content */}
-        <span className="inline-block text-xs font-bold tracking-widest text-primary-400 uppercase mb-4">
-          Bergabung Bersama Kami
-        </span>
         <h2 className="font-display font-bold text-2xl sm:text-3xl lg:text-4xl text-white leading-tight mb-4">
           Jadilah bagian dari{" "}
           <span className="inline-block bg-accent-yellow-500 text-primary-900 px-2 py-0.5 rounded-lg border-2 border-accent-yellow-400 -rotate-1">
