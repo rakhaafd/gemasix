@@ -4,27 +4,69 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button, HighlightText } from "@/components/ui";
 import { useState, useEffect } from "react";
+import { collection, query, onSnapshot } from "firebase/firestore";
+import { clientDb } from "@/lib/firebase-client";
 
-const sliderImages = [
+const DEFAULT_SLIDER_IMAGES = [
   "/images/hero/4.jpg",
   "/images/hero/1.jpg",
   "/images/hero/2.jpg",
-  "/images/hero/3.jpg"
+  "/images/hero/3.jpg",
 ];
 
 export default function Hero() {
   const [currentImage, setCurrentImage] = useState(0);
+  const [sliderImages, setSliderImages] = useState<string[]>(DEFAULT_SLIDER_IMAGES);
 
+  // Subscribe to real-time hero images from Firestore
   useEffect(() => {
+    const q = query(collection(clientDb, "hero_images"));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const fetchedDocs: { imageUrl: string; order: number }[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.imageUrl) {
+            fetchedDocs.push({
+              imageUrl: data.imageUrl,
+              order: typeof data.order === "number" ? data.order : 999,
+            });
+          }
+        });
+
+        if (fetchedDocs.length > 0) {
+          fetchedDocs.sort((a, b) => a.order - b.order);
+          setSliderImages(fetchedDocs.map((item) => item.imageUrl));
+        } else {
+          setSliderImages(DEFAULT_SLIDER_IMAGES);
+        }
+      },
+      (error) => {
+        console.error("Error fetching hero images in Hero section:", error);
+        setSliderImages(DEFAULT_SLIDER_IMAGES);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Handle automatic slideshow timer
+  useEffect(() => {
+    if (sliderImages.length === 0) return;
+
     const timer = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % sliderImages.length);
     }, 3000);
     return () => clearInterval(timer);
-  }, []);
+  }, [sliderImages.length]);
+
+  const activeImage = sliderImages[currentImage] || sliderImages[0] || DEFAULT_SLIDER_IMAGES[0];
 
   return (
     <section className="relative min-h-screen flex items-center pt-20 pb-16 overflow-hidden">
-      {/* Decorative gradient blur - kita keep ini agar tetap bercahaya */}
+      {/* Decorative gradient blur */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-yellow-500/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -32,7 +74,6 @@ export default function Hero() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left content */}
           <div>
-
             {/* Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
@@ -87,7 +128,7 @@ export default function Hero() {
               <AnimatePresence mode="wait">
                 <motion.img
                   key={currentImage}
-                  src={sliderImages[currentImage]}
+                  src={activeImage}
                   alt={`Kegiatan GEMASIX ${currentImage + 1}`}
                   initial={{ opacity: 0, scale: 1.05 }}
                   animate={{ opacity: 1, scale: 1 }}

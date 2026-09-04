@@ -243,7 +243,6 @@ export default function TambahRapatModal({ isOpen, onClose, initialData }: Tamba
             
             {attendanceImagePreview && (
               <div className="relative w-32 h-24 rounded-xl border-2 border-accent-green-600 shadow-[2px_2px_0_var(--color-accent-green-600)] overflow-hidden">
-                <div className="absolute top-0 left-0 bg-accent-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br-md z-10">Baru</div>
                 <img src={attendanceImagePreview} alt="Preview Baru" className="w-full h-full object-cover" />
                 <button
                   type="button"

@@ -16,13 +16,15 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Image as ImageIcon
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/hero", label: "Banner Hero", icon: ImageIcon },
   { href: "/admin/programs", label: "Program Kerja", icon: FolderOpen },
   { href: "/admin/events", label: "Agenda", icon: Calendar },
   { href: "/admin/meetings", label: "Notulen Rapat", icon: FileText },
