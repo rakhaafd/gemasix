@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { AdminPageHeader, Button, Card, CardSkeleton, Pagination, ModalWrapper } from "@/components/ui";
 import { InstagramCardPreview } from "@/components/ui/InstagramCardPreview";
-import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download, Bell, BellRing, BellOff } from "lucide-react";
+import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download, Bell, BellRing, Search, X } from "lucide-react";
 import { collection, query, orderBy, onSnapshot, Timestamp, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { clientDb } from "@/lib/firebase-client";
 import { domToPng } from "modern-screenshot";
@@ -72,6 +72,11 @@ export default function AdminMessagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
+  // Search, Filter & Sort states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [sortOption, setSortOption] = useState<"newest" | "oldest" | "longest" | "shortest">("newest");
+
   const [logoDataUrl, setLogoDataUrl] = useState<string | undefined>(undefined);
 
   const [selectedModalMessage, setSelectedModalMessage] = useState<MessageItem | null>(null);
@@ -113,15 +118,84 @@ export default function AdminMessagesPage() {
     return () => unsubscribe();
   }, []);
 
+  // Reset page when filter/search/sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, dateFilter, sortOption]);
+
+  // Processed (searched, filtered, sorted) messages
+  const processedMessages = useMemo(() => {
+    let result = [...messages];
+
+    // 1. Search Query Filter
+    if (searchQuery.trim() !== "") {
+      const queryLower = searchQuery.toLowerCase().trim();
+      result = result.filter((msg) =>
+        msg.message.toLowerCase().includes(queryLower)
+      );
+    }
+
+    // 2. Date Filter
+    if (dateFilter !== "all") {
+      const now = new Date();
+      result = result.filter((msg) => {
+        if (!msg.createdAt) return false;
+        const msgDate = msg.createdAt.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt as any);
+
+        if (dateFilter === "today") {
+          return (
+            msgDate.getDate() === now.getDate() &&
+            msgDate.getMonth() === now.getMonth() &&
+            msgDate.getFullYear() === now.getFullYear()
+          );
+        } else if (dateFilter === "week") {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(now.getDate() - 7);
+          return msgDate >= sevenDaysAgo;
+        } else if (dateFilter === "month") {
+          return (
+            msgDate.getMonth() === now.getMonth() &&
+            msgDate.getFullYear() === now.getFullYear()
+          );
+        }
+        return true;
+      });
+    }
+
+    // 3. Sorting
+    result.sort((a, b) => {
+      const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+      const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+
+      if (sortOption === "newest") {
+        return timeB - timeA;
+      } else if (sortOption === "oldest") {
+        return timeA - timeB;
+      } else if (sortOption === "longest") {
+        return b.message.length - a.message.length;
+      } else if (sortOption === "shortest") {
+        return a.message.length - b.message.length;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [messages, searchQuery, dateFilter, sortOption]);
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setDateFilter("all");
+    setSortOption("newest");
+  };
+
+  const isFilterActive = searchQuery !== "" || dateFilter !== "all" || sortOption !== "newest";
+
   const generateCardImage = async (): Promise<string | null> => {
     if (!previewRef.current) return null;
 
-    // Kalau logo belum ke-preload (jarang terjadi, biasanya sudah selesai
-    // duluan sebelum user sempat klik tombol), coba fetch ulang sebentar.
     if (!logoDataUrl) {
       const dataUrl = await fetchAsDataUrl("/images/logos.png");
       if (dataUrl) setLogoDataUrl(dataUrl);
-      // beri waktu React commit logo baru ke DOM
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
@@ -207,7 +281,8 @@ export default function AdminMessagesPage() {
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp) return "Baru saja";
-    return timestamp.toDate().toLocaleDateString("id-ID", {
+    const dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp as any);
+    return dateObj.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -399,8 +474,15 @@ export default function AdminMessagesPage() {
 
       <div className="bg-white rounded-[2rem] border border-neutral-200 shadow-sm overflow-hidden p-6 sm:p-8">
 
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-bold text-primary-900">Daftar Pesan Masuk</h2>
+        {/* Section Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-primary-900">Daftar Pesan Masuk</h2>
+            <p className="text-xs text-neutral-500 font-medium mt-0.5">
+              Menampilkan {processedMessages.length} dari {messages.length} pesan
+            </p>
+          </div>
+
           {messages.length > 0 && !isLoading && (
             <Button
               as="button"
@@ -419,6 +501,74 @@ export default function AdminMessagesPage() {
           )}
         </div>
 
+        {/* Search, Filter, and Sort Controls (Clean & Simple) */}
+        <div className="bg-neutral-50/80 border border-neutral-200/80 rounded-2xl p-3 mb-6 flex flex-col md:flex-row gap-2.5 items-stretch md:items-center">
+          
+          {/* Search Box */}
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari pesan NGL..."
+              className="w-full pl-9 pr-8 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all font-medium"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 transition-colors p-1"
+                title="Hapus pencarian"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Filter & Sort Selectors */}
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
+            {/* Filter Waktu */}
+            <div className="relative flex-1 sm:flex-initial min-w-[130px]">
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value as any)}
+                className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-semibold text-neutral-700 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all cursor-pointer"
+              >
+                <option value="all">Semua Waktu</option>
+                <option value="today">Hari Ini</option>
+                <option value="week">7 Hari Terakhir</option>
+                <option value="month">Bulan Ini</option>
+              </select>
+            </div>
+
+            {/* Urutkan (Sort) */}
+            <div className="relative flex-1 sm:flex-initial min-w-[140px]">
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as any)}
+                className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-semibold text-neutral-700 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 transition-all cursor-pointer"
+              >
+                <option value="newest">Terbaru Dulu</option>
+                <option value="oldest">Terlama Dulu</option>
+                <option value="longest">Pesan Terpanjang</option>
+                <option value="shortest">Pesan Terpendek</option>
+              </select>
+            </div>
+
+            {/* Reset Button (only if active) */}
+            {isFilterActive && (
+              <button
+                onClick={resetFilters}
+                className="px-2.5 py-2 text-xs font-semibold text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors whitespace-nowrap flex items-center gap-1"
+                title="Reset Filter"
+              >
+                <X size={14} /> Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Content Section */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -437,10 +587,29 @@ export default function AdminMessagesPage() {
               Saat ini belum ada pesan anonim yang masuk. Sebarkan link NGL GEMASIX ke sosial media kalian!
             </p>
           </div>
+        ) : processedMessages.length === 0 ? (
+          <div className="py-16 flex flex-col items-center justify-center text-center bg-neutral-50/50 rounded-2xl border-2 border-dashed border-neutral-200 p-8">
+            <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mb-4 text-neutral-400">
+              <Search size={28} />
+            </div>
+            <h3 className="text-lg font-bold text-primary-900 mb-1">Pesan Tidak Ditemukan</h3>
+            <p className="text-xs text-neutral-500 max-w-sm mb-4">
+              Tidak ada pesan NGL yang sesuai dengan pencarian atau filter yang dipilih.
+            </p>
+            <Button
+              as="button"
+              variant="outline"
+              size="sm"
+              onClick={resetFilters}
+              className="text-xs font-bold"
+            >
+              Reset Filter & Pencarian
+            </Button>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {messages
+              {processedMessages
                 .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
                 .map((msg) => (
                   <div
@@ -503,9 +672,9 @@ export default function AdminMessagesPage() {
 
             <Pagination
               currentPage={currentPage}
-              totalPages={Math.ceil(messages.length / ITEMS_PER_PAGE)}
+              totalPages={Math.ceil(processedMessages.length / ITEMS_PER_PAGE)}
               onPageChange={setCurrentPage}
-              totalItems={messages.length}
+              totalItems={processedMessages.length}
               itemsPerPage={ITEMS_PER_PAGE}
               className="p-4 border-t border-neutral-100 bg-neutral-50/30 mt-6"
             />

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { AdminPageHeader, Button, PageContainer, EmptyState, IconButton, Badge, TableSkeleton, Pagination } from "@/components/ui";
-import { FolderOpen, Plus, Edit2, Trash2, Calendar, Image as ImageIcon, Eye, Tag } from "lucide-react";
+import { FolderOpen, Plus, Edit2, Trash2, Calendar, Image as ImageIcon, Eye, Tag, MessageSquare } from "lucide-react";
 import TambahProgramModal from "@/components/programs/TambahProgramModal";
+import AdminProgramCommentsModal from "@/components/programs/AdminProgramCommentsModal";
 import { Program, deleteProgram } from "@/lib/programs";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { clientDb } from "@/lib/firebase-client";
@@ -15,9 +16,14 @@ export default function AdminProgramsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<Program | null>(null);
+
+  // Comments modal state
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+  const [programForComments, setProgramForComments] = useState<Program | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -62,11 +68,16 @@ export default function AdminProgramsPage() {
     setProgramToEdit(program);
     setIsModalOpen(true);
   };
-  
+
   const handleView = (program: Program) => {
     if (program.id) {
       router.push(`/proker/${program.id}/details`);
     }
+  };
+
+  const handleOpenComments = (program: Program) => {
+    setProgramForComments(program);
+    setIsCommentsModalOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -79,17 +90,17 @@ export default function AdminProgramsPage() {
 
   return (
     <div>
-      <AdminPageHeader 
-        title="Program Kerja" 
-        description="Kelola program kerja dan dokumentasi kegiatan GEMASIX." 
+      <AdminPageHeader
+        title="Program Kerja"
+        description="Kelola program kerja dan dokumentasi kegiatan GEMASIX."
       />
-      
+
       <PageContainer>
         <div className="flex flex-col gap-8">
-          
+
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-4">
-            <Button 
+            <Button
               as="button"
               variant="primary"
               size="md"
@@ -106,11 +117,11 @@ export default function AdminProgramsPage() {
             <div className="px-6 py-4 border-b border-neutral-200 bg-neutral-50/50">
               <h2 className="font-bold text-primary-900 font-display">Daftar Program Kerja</h2>
             </div>
-        
+
             {isLoading ? (
               <TableSkeleton />
             ) : programs.length === 0 ? (
-              <EmptyState 
+              <EmptyState
                 icon={FolderOpen}
                 title="Belum ada program kerja"
                 description="Mulai tambahkan program kerja dan galeri dokumentasi kegiatan di sini."
@@ -125,7 +136,7 @@ export default function AdminProgramsPage() {
                         <th className="px-6 py-4 font-medium whitespace-nowrap w-40">Tanggal</th>
                         <th className="px-6 py-4 font-medium">Program Kerja</th>
                         <th className="px-6 py-4 font-medium">Galeri</th>
-                        <th className="px-6 py-4 font-medium text-right w-24">Aksi</th>
+                        <th className="px-6 py-4 font-medium text-right w-36">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
@@ -168,6 +179,7 @@ export default function AdminProgramsPage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-1 transition-opacity">
+                              <IconButton icon={MessageSquare} variant="primary" onClick={() => handleOpenComments(program)} label="Komentar & Balasan" className="mr-1" />
                               <IconButton icon={Eye} variant="ghost" onClick={() => handleView(program)} label="Lihat Landing" className="mr-1" />
                               <IconButton icon={Edit2} variant="warning" onClick={() => handleEdit(program)} label="Edit" className="mr-1" />
                               <IconButton icon={Trash2} variant="danger" onClick={() => program.id && handleDelete(program.id, program.imageUrls)} label="Hapus" />
@@ -178,7 +190,7 @@ export default function AdminProgramsPage() {
                     </tbody>
                   </table>
                 </div>
-                
+
                 {/* Mobile List View */}
                 <div className="md:hidden flex flex-col divide-y divide-neutral-100">
                   {programs
@@ -192,11 +204,11 @@ export default function AdminProgramsPage() {
                           {formatDate(program.date)}
                         </div>
                       </div>
-                      
+
                       <div className="flex flex-col gap-1 mt-1">
                         <span className="font-bold text-primary-900 leading-tight text-lg">{program.title}</span>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
                         {program.imageUrls && program.imageUrls.length > 0 ? (
                           <div className="flex items-center gap-2">
@@ -207,17 +219,18 @@ export default function AdminProgramsPage() {
                           <span className="text-xs font-medium text-neutral-400 px-1 inline-flex items-center gap-1.5"><ImageIcon size={14} /> 0 Foto</span>
                         )}
                       </div>
-                      
-                      <div className="flex items-center justify-between mt-2 pt-3 border-t border-neutral-100">
-                        <Button 
+
+                      <div className="flex items-center justify-between mt-2 pt-3 border-t border-neutral-100 gap-2">
+                        <Button
                           as="button"
                           variant="primary"
                           onClick={() => handleView(program)}
-                          className="flex-1 flex justify-center items-center gap-2 font-bold text-sm mr-3 !py-2"
+                          className="flex-1 flex justify-center items-center gap-2 font-bold text-xs !py-2"
                         >
-                          <Eye size={16} /> Lihat
+                          <Eye size={15} /> Lihat
                         </Button>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5">
+                          <IconButton icon={MessageSquare} variant="primary" onClick={() => handleOpenComments(program)} label="Komentar" />
                           <IconButton icon={Edit2} variant="warning" onClick={() => handleEdit(program)} label="Edit" />
                           <IconButton icon={Trash2} variant="danger" onClick={() => program.id && handleDelete(program.id, program.imageUrls)} label="Hapus" />
                         </div>
@@ -225,7 +238,7 @@ export default function AdminProgramsPage() {
                     </div>
                   ))}
                 </div>
-                
+
                 <Pagination
                   currentPage={currentPage}
                   totalPages={Math.ceil(programs.length / ITEMS_PER_PAGE)}
@@ -240,11 +253,17 @@ export default function AdminProgramsPage() {
         </div>
       </PageContainer>
 
-      <TambahProgramModal 
+      <TambahProgramModal
         key={isModalOpen ? programToEdit?.id || 'new' : 'closed'}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={programToEdit}
+      />
+
+      <AdminProgramCommentsModal
+        isOpen={isCommentsModalOpen}
+        onClose={() => setIsCommentsModalOpen(false)}
+        program={programForComments}
       />
     </div>
   );
