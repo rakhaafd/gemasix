@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import { AdminPageHeader, Button, Card, CardSkeleton, Pagination, ModalWrapper } from "@/components/ui";
-import { InstagramCardPreview } from "@/components/ui/InstagramCardPreview";
-import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download, Bell, BellRing, Search, X } from "lucide-react";
+import { InstagramCardPreview, CardStyleVariant } from "@/components/ui/InstagramCardPreview";
+import { MessageCircle, Share, Loader2, Calendar, Trash2, Eye, Download, Bell, BellRing, Search, X, Palette } from "lucide-react";
 import { collection, query, orderBy, onSnapshot, Timestamp, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { clientDb } from "@/lib/firebase-client";
 import { domToPng } from "modern-screenshot";
@@ -76,6 +76,9 @@ export default function AdminMessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [sortOption, setSortOption] = useState<"newest" | "oldest" | "longest" | "shortest">("newest");
+
+  // Card Style Variant (Style 1: Dark Theme, Style 2: Vibrant Pill)
+  const [cardStyle, setCardStyle] = useState<CardStyleVariant>("style2");
 
   const [logoDataUrl, setLogoDataUrl] = useState<string | undefined>(undefined);
 
@@ -218,7 +221,7 @@ export default function AdminMessagesPage() {
     setIsGeneratingModalImage(true);
     setModalImageDataUrl(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 60));
 
     try {
       const dataUrl = await generateCardImage();
@@ -226,6 +229,26 @@ export default function AdminMessagesPage() {
     } catch (err) {
       console.error("Gagal membuat preview gambar:", err);
       showError("Gagal!", "Gagal memuat pratinjau gambar.");
+    } finally {
+      setIsGeneratingModalImage(false);
+    }
+  };
+
+  const handleSwitchStyle = async (newStyle: CardStyleVariant) => {
+    if (newStyle === cardStyle) return;
+    setCardStyle(newStyle);
+    if (!selectedModalMessage) return;
+
+    setIsGeneratingModalImage(true);
+    setModalImageDataUrl(null);
+
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    try {
+      const dataUrl = await generateCardImage();
+      setModalImageDataUrl(dataUrl);
+    } catch (err) {
+      console.error("Gagal berpindah style gambar:", err);
     } finally {
       setIsGeneratingModalImage(false);
     }
@@ -243,10 +266,9 @@ export default function AdminMessagesPage() {
     if (!previewRef.current) return;
 
     setIsSharingId(msg.id);
-
     setPreviewMessage(msg.message);
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 60));
 
     try {
       const dataUrl = await generateCardImage();
@@ -417,6 +439,7 @@ export default function AdminMessagesPage() {
           ref={previewRef}
           message={previewMessage}
           logoSrc={logoDataUrl}
+          variant={cardStyle}
         />
       </div>
 
@@ -430,6 +453,38 @@ export default function AdminMessagesPage() {
         title="Pratinjau Story NGL"
       >
         <div className="flex flex-col items-center">
+          
+          {/* Style Selector Option */}
+          <div className="w-full flex flex-col gap-1.5 mb-4">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-700">
+              <Palette size={14} className="text-primary-600" /> Style
+            </div>
+            <div className="grid grid-cols-2 gap-2 bg-neutral-100 p-1.5 rounded-xl border border-neutral-200">
+              <button
+                type="button"
+                onClick={() => handleSwitchStyle("style1")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  cardStyle === "style1"
+                    ? "bg-primary-900 text-white shadow-sm"
+                    : "text-neutral-600 hover:text-neutral-900 hover:bg-white/60"
+                }`}
+              >
+                1
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchStyle("style2")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  cardStyle === "style2"
+                    ? "bg-primary-900 text-white shadow-sm"
+                    : "text-neutral-600 hover:text-neutral-900 hover:bg-white/60"
+                }`}
+              >
+                2
+              </button>
+            </div>
+          </div>
+
           {isGeneratingModalImage ? (
             <div className="py-24 flex flex-col items-center justify-center text-primary-500 gap-3">
               <Loader2 size={36} className="animate-spin" />
