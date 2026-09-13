@@ -459,7 +459,7 @@ export default function AdminMessagesPage() {
             <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-700">
               <Palette size={14} className="text-primary-600" /> Style
             </div>
-            <div className="grid grid-cols-2 gap-2 bg-neutral-100 p-1.5 rounded-xl border border-neutral-200">
+            <div className="grid grid-cols-3 gap-2 bg-neutral-100 p-1.5 rounded-xl border border-neutral-200">
               <button
                 type="button"
                 onClick={() => handleSwitchStyle("style1")}
@@ -469,7 +469,7 @@ export default function AdminMessagesPage() {
                     : "text-neutral-600 hover:text-neutral-900 hover:bg-white/60"
                 }`}
               >
-                1
+                Style 1
               </button>
               <button
                 type="button"
@@ -480,7 +480,18 @@ export default function AdminMessagesPage() {
                     : "text-neutral-600 hover:text-neutral-900 hover:bg-white/60"
                 }`}
               >
-                2
+                Style 2
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchStyle("style3")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  cardStyle === "style3"
+                    ? "bg-primary-900 text-white shadow-sm"
+                    : "text-neutral-600 hover:text-neutral-900 hover:bg-white/60"
+                }`}
+              >
+                Style 3
               </button>
             </div>
           </div>
